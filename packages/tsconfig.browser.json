@@ -1,0 +1,4 @@
+{
+  "files": [],
+  "references": [{ "path": "snitches/tsconfig.browser.json" }]
+}

@@ -1,0 +1,33 @@
+{
+  "name": "snitches-workspace",
+  "private": true,
+  "version": "0.0.1",
+  "scripts": {
+    "start": "yarn build && cd example && yarn dev",
+    "build": "yarn build:esm && yarn build:cjs && yarn build:browser",
+    "build:esm": "ttsc --build packages/tsconfig.json",
+    "build:cjs": "ttsc --build packages/tsconfig.cjs.json",
+    "build:browser": "IS_NODE_EXPRESSION='false' ttsc --build packages/tsconfig.browser.json"
+  },
+  "author": "Craig Cavalier",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/jest": "^26.0.20",
+    "@types/node": "^14.14.31",
+    "@types/react": "^17.0.1",
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1",
+    "ts-node": "^9.1.1",
+    "ts-transform-define": "^0.1.10",
+    "ttypescript": "^1.5.12",
+    "typescript": "^4.1.5",
+    "workspaces-run": "^1.0.1"
+  },
+  "resolutions": {
+    "typescript": "^4.1.5"
+  },
+  "workspaces": [
+    "packages/snitches",
+    "example"
+  ]
+}
