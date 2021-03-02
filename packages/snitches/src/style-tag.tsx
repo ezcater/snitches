@@ -3,12 +3,16 @@ import {default as CC} from './style-cache';
 import {default as CS} from './style';
 import {blocks} from './blocks';
 
+interface Sheet {
+  toString(): string;
+}
+
 interface StyleTagProps {
   children?: ReactNode;
   /**
    * CSS Rules to either server render or inject into the page
    */
-  ruleset?: string;
+  ruleset?: Sheet | string;
 }
 
 /**
@@ -20,7 +24,7 @@ interface StyleTagProps {
 const StyleTag: React.FC<StyleTagProps> = (props) => {
   return (
     <CC>
-      <CS>{blocks(props.ruleset || '')}</CS>
+      <CS>{blocks(props.ruleset?.toString() || '')}</CS>
       <>{props.children}</>
     </CC>
   );
