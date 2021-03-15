@@ -17,7 +17,7 @@ function Style(props: StyleProps) {
 
   if (props.children.length) {
     if (isNodeEnvironment()) {
-      let hasSheets = false;
+      let sheets = [];
 
       for (let i = 0; i < props.children.length; i++) {
         const sheet = props.children[i];
@@ -25,17 +25,17 @@ function Style(props: StyleProps) {
           continue;
         } else {
           inserted[sheet] = true;
-          hasSheets = true;
+          sheets.push(sheet);
         }
       }
 
-      if (!hasSheets) {
+      if (!sheets.length) {
         return null;
       }
 
       return (
         <style data-s-ssr nonce={props.nonce}>
-          {props.children.join('')}
+          {sheets.join('')}
         </style>
       );
     } else {
