@@ -1,16 +1,76 @@
+import sortFn from 'sort-css-media-queries';
 import {StyleSheetOpts} from './types';
 
-/**
- * Adds a `<style>` tag to the `<head>`.
- */
-function addStyleTagToHead(opts: StyleSheetOpts): HTMLStyleElement {
-  const tag = document.createElement('style');
-  opts.nonce && tag.setAttribute('nonce', opts.nonce);
-  tag.appendChild(document.createTextNode(''));
-  document.head.appendChild(tag);
+const sortCSSmq = (a: string, b: string) =>
+  a === '' ? -1 : b === '' ? 1 : a === 'all' ? -1 : b === 'all' ? 1 : sortFn(a, b);
 
-  return tag;
+/**
+ * Ordered style buckets using the media in which the style should apply to.
+ */
+const styleBucketOrdering: string[] = [];
+
+/**
+ * Holds all style buckets in memory that have been added to the head.
+ */
+const styleBucketsInHead: Partial<Record<string, HTMLStyleElement>> = {};
+
+/**
+ * Lazily adds a `<style>` bucket to the `<head>`.
+ * This will ensure that the style buckets are ordered by media query.
+ *
+ * @param bucket Bucket to insert in the head
+ */
+function lazyAddStyleBucketToHead(bucketName: string, opts: StyleSheetOpts): HTMLStyleElement {
+  if (!styleBucketsInHead[bucketName]) {
+    // make sure the bucket is inserted into the document in the correct position relative to the other buckets
+    styleBucketOrdering.push(bucketName);
+    styleBucketOrdering.sort(sortCSSmq);
+
+    let currentBucketIndex = styleBucketOrdering.indexOf(bucketName) + 1;
+    let nextBucketFromCache = null;
+
+    // Find the next bucket which we will add our new style bucket before.
+    for (; currentBucketIndex < styleBucketOrdering.length; currentBucketIndex++) {
+      const nextBucket = styleBucketsInHead[styleBucketOrdering[currentBucketIndex]];
+      if (nextBucket) {
+        nextBucketFromCache = nextBucket;
+        break;
+      }
+    }
+
+    const tag = document.createElement('style');
+    opts.nonce && tag.setAttribute('nonce', opts.nonce);
+    bucketName && tag.setAttribute('media', bucketName);
+    tag.appendChild(document.createTextNode(''));
+    styleBucketsInHead[bucketName] = tag;
+    document.head.insertBefore(tag, nextBucketFromCache);
+  }
+
+  return styleBucketsInHead[bucketName]!;
 }
+
+/**
+ * Gets the bucket depending on the sheet.
+ * This function makes assumptions as to the form of the input class name.
+ *
+ * Input:
+ *
+ * ```
+ * "@media (min-width: 600px) {._a1234567:hover{ color: red; }}"
+ * ```
+ *
+ * Output:
+ *
+ * ```
+ * "@media (min-width: 600px)"
+ * ```
+ *
+ * @param sheet styles for which we are getting the bucket
+ */
+const getStyleBucketName = (sheet: string): string => {
+  // extract between `@media` and `{`
+  return sheet.match(/@media\s?(.*?)\s?{/)?.[1] || '';
+};
 
 /**
  * Used to move styles to the head of the application during runtime.
@@ -19,7 +79,8 @@ function addStyleTagToHead(opts: StyleSheetOpts): HTMLStyleElement {
  * @param opts StyleSheetOpts
  */
 export default function insertRule(css: string, opts: StyleSheetOpts) {
-  const style = addStyleTagToHead(opts);
+  const bucketName = getStyleBucketName(css);
+  const style = lazyAddStyleBucketToHead(bucketName, opts);
 
   if (process.env.NODE_ENV === 'production') {
     const sheet = style.sheet as CSSStyleSheet;
