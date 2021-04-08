@@ -15,11 +15,10 @@ interface StyleProps extends StyleSheetOpts {
 
 function Style(props: StyleProps) {
   const inserted = useCache();
+  const {current: sheets} = React.useRef<string[]>([]);
 
   if (props.children.length) {
     if (isNodeEnvironment()) {
-      let sheets = [];
-
       for (let i = 0; i < props.children.length; i++) {
         const sheet = props.children[i];
         // if cached and not a media query
