@@ -1,4 +1,4 @@
-import React, {memo} from 'react';
+import React from 'react';
 import insertRule from './sheet';
 import {StyleSheetOpts} from './types';
 import {useCache} from './style-cache';
@@ -56,4 +56,4 @@ function Style(props: StyleProps) {
   return null;
 }
 
-export default memo(Style, () => true);
+export default Style;
