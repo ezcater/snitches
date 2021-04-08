@@ -3,6 +3,7 @@ import insertRule from './sheet';
 import {StyleSheetOpts} from './types';
 import {useCache} from './style-cache';
 import {isNodeEnvironment} from './is-node';
+import {sortCssRules} from './sort-media-queries';
 
 interface StyleProps extends StyleSheetOpts {
   /**
@@ -21,7 +22,8 @@ function Style(props: StyleProps) {
 
       for (let i = 0; i < props.children.length; i++) {
         const sheet = props.children[i];
-        if (inserted[sheet]) {
+        // if cached and not a media query
+        if (inserted[sheet] && sheet.charCodeAt(0) !== 64) {
           continue;
         } else {
           inserted[sheet] = true;
@@ -35,7 +37,7 @@ function Style(props: StyleProps) {
 
       return (
         <style data-s-ssr nonce={props.nonce}>
-          {sheets.join('')}
+          {sortCssRules(sheets).join('')}
         </style>
       );
     } else {

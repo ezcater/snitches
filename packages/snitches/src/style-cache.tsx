@@ -1,5 +1,6 @@
 import * as React from 'react';
 import {createContext, useContext} from 'react';
+import insertRule from './sheet';
 import {isNodeEnvironment} from './is-node';
 import {ProviderComponent, UseCacheHook} from './types';
 import {blocks} from './blocks';
@@ -18,13 +19,16 @@ if (!isNodeEnvironment()) {
    */
   const ssrStyles = document.querySelectorAll<HTMLStyleElement>('style[data-s-ssr]');
   for (let i = 0; i < ssrStyles.length; i++) {
-    // Move all found server-side rendered style elements to the head before React hydration happens.
-    document.head.appendChild(ssrStyles[i]);
+    const tag = ssrStyles[i];
 
     // add each style declaration block from the server render into the cache
-    blocks(ssrStyles[i].textContent || '').forEach((styleDeclaration) => {
+    blocks(tag.textContent || '').forEach(styleDeclaration => {
+      insertRule(styleDeclaration);
       Cache[styleDeclaration] = true;
     });
+
+    // remove all server-side rendered style elements to the head before React hydration happens.
+    tag.parentNode?.removeChild(tag);
   }
 }
 
@@ -49,7 +53,7 @@ export const useCache: UseCacheHook = () => {
  *
  * On the browser this turns into a fragment with no React Context.
  */
-const StyleCacheProvider: ProviderComponent = (props) => {
+const StyleCacheProvider: ProviderComponent = props => {
   if (isNodeEnvironment()) {
     // This code path isn't conditionally called at build time - safe to ignore.
     // eslint-disable-next-line react-hooks/rules-of-hooks

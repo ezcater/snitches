@@ -1,8 +1,5 @@
-import sortFn from 'sort-css-media-queries';
+import {sortCssMediaQueries} from './sort-media-queries';
 import {StyleSheetOpts} from './types';
-
-const sortCSSmq = (a: string, b: string) =>
-  a === '' ? -1 : b === '' ? 1 : a === 'all' ? -1 : b === 'all' ? 1 : sortFn(a, b);
 
 /**
  * Ordered style buckets using the media in which the style should apply to.
@@ -24,7 +21,7 @@ function lazyAddStyleBucketToHead(bucketName: string, opts: StyleSheetOpts): HTM
   if (!styleBucketsInHead[bucketName]) {
     // make sure the bucket is inserted into the document in the correct position relative to the other buckets
     styleBucketOrdering.push(bucketName);
-    styleBucketOrdering.sort(sortCSSmq);
+    styleBucketOrdering.sort(sortCssMediaQueries);
 
     let currentBucketIndex = styleBucketOrdering.indexOf(bucketName) + 1;
     let nextBucketFromCache = null;
@@ -78,7 +75,7 @@ const getStyleBucketName = (sheet: string): string => {
  * @param css string
  * @param opts StyleSheetOpts
  */
-export default function insertRule(css: string, opts: StyleSheetOpts) {
+export default function insertRule(css: string, opts: StyleSheetOpts = {}) {
   const bucketName = getStyleBucketName(css);
   const style = lazyAddStyleBucketToHead(bucketName, opts);
 
