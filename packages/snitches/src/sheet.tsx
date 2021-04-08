@@ -79,6 +79,11 @@ export default function insertRule(css: string, opts: StyleSheetOpts = {}) {
   const bucketName = getStyleBucketName(css);
   const style = lazyAddStyleBucketToHead(bucketName, opts);
 
+  if (bucketName) {
+    // remove the media query, since it is now on the attr tag
+    css = css.substring(css.indexOf('{') + 1, css.lastIndexOf('}'));
+  }
+
   if (process.env.NODE_ENV === 'production') {
     const sheet = style.sheet as CSSStyleSheet;
     sheet.insertRule(css, sheet.cssRules.length);
