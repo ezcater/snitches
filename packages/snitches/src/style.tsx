@@ -35,9 +35,11 @@ function Style(props: StyleProps) {
       }
 
       return (
-        <style data-s-ssr nonce={props.nonce}>
-          {sortCssRules(sheets).join('')}
-        </style>
+        <style
+          data-s-ssr
+          nonce={props.nonce}
+          dangerouslySetInnerHTML={{__html: sortCssRules(sheets).join('')}}
+        />
       );
     } else {
       for (let i = 0; i < props.children.length; i++) {
