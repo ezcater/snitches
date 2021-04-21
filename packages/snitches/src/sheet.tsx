@@ -1,5 +1,6 @@
 import {sortCssMediaQueries} from './sort-media-queries';
 import {StyleSheetOpts} from './types';
+import {blocks} from './blocks';
 
 /**
  * Ordered style buckets using the media in which the style should apply to.
@@ -86,7 +87,8 @@ export default function insertRule(css: string, opts: StyleSheetOpts = {}) {
 
   if (process.env.NODE_ENV === 'production') {
     const sheet = style.sheet as CSSStyleSheet;
-    sheet.insertRule(css, sheet.cssRules.length);
+    // media query may have contained multiple rules, so iterate over each before inserting
+    blocks(css).forEach(style => sheet.insertRule(style, sheet.cssRules.length));
   } else {
     style.appendChild(document.createTextNode(css));
   }
