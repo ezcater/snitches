@@ -6,7 +6,8 @@ export const blocks = (style: string): string[] => {
   let closed = 0;
   return style
     .toString()
-    .split(/(?<=\})(?!})/)
+    // can't use /(?<=\})(?!})/ as we need to support IE.
+    .split(/([^}]*\})(?!})/g).filter(x => x)
     .reduce((prev, next) => {
       if (opened === closed) prev.push(next);
       else prev[prev.length - 1] += next;
