@@ -82,8 +82,9 @@ export default function insertRule(css: string, opts: StyleSheetOpts = {}) {
   const bucketName = getStyleBucketName(css);
   const style = lazyAddStyleBucketToHead(bucketName, opts);
 
-  if (bucketName) {
+  if (bucketName && !isIE11) {
     // remove the media query, since it is now on the attr tag
+    // ...except the css-vars-ponyfill doesn't support media attribute, so skip this step in IE
     css = css.substring(css.indexOf('{') + 1, css.lastIndexOf('}'));
   }
 
