@@ -21,8 +21,7 @@ function Style(props: StyleProps) {
     if (isNodeEnvironment()) {
       for (let i = 0; i < props.children.length; i++) {
         const sheet = props.children[i];
-        // if cached and not a media query
-        if (inserted[sheet] && sheet.charCodeAt(0) !== 64) {
+        if (inserted[sheet]) {
           continue;
         } else {
           inserted[sheet] = true;
