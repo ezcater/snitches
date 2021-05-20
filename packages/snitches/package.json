@@ -27,8 +27,7 @@
     "README.md"
   ],
   "dependencies": {
-    "csstype": "^3.0.6",
-    "sort-css-media-queries": "^1.5.4"
+    "csstype": "^3.0.6"
   },
   "peerDependencies": {
     "react": ">= 16.12.0"
