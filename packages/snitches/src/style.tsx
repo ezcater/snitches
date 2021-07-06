@@ -3,7 +3,6 @@ import insertRule from './sheet';
 import {StyleSheetOpts} from './types';
 import {useCache} from './style-cache';
 import {isNodeEnvironment} from './is-node';
-import {sortCssRules} from './sort-media-queries';
 
 interface StyleProps extends StyleSheetOpts {
   /**
@@ -37,7 +36,7 @@ function Style(props: StyleProps) {
         <style
           data-s-ssr
           nonce={props.nonce}
-          dangerouslySetInnerHTML={{__html: sortCssRules(sheets).join('')}}
+          dangerouslySetInnerHTML={{__html: sheets.join('')}}
         />
       );
     } else {
