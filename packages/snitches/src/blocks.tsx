@@ -5,6 +5,7 @@ export const blocks = (style: string): string[] => {
   let opened = 0;
   let closed = 0;
   return style
+    .trim()
     .toString()
     // can't use /(?<=\})(?!})/ as we need to support IE.
     .split(/([^}]*\})(?!})/g).filter(x => x)

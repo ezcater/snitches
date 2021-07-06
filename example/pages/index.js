@@ -107,7 +107,7 @@ export default function Home() {
           className={button({
             variant: 'primary',
             outlined: true,
-            size: {initial: '2', bp1: '1'},
+            size: {'@initial': '2', '@bp1': '1'},
           })}
         >
           Responsive Primary Button

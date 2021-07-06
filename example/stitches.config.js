@@ -1,6 +1,7 @@
 import {createCss} from '@stitches/core';
 
 export default createCss({
+  root: null,
   theme: {
     colors: {
       gray400: 'gainsboro',
@@ -25,7 +26,7 @@ export default createCss({
       paddingRight: value,
     }),
   },
-  conditions: {
-    bp1: '@media (min-width: 400px)',
+  media: {
+    bp1: '(min-width: 400px)',
   },
 });

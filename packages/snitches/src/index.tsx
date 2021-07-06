@@ -1,1 +1,1 @@
-export {default} from './style-tag';
+export {default} from './style-group';
