@@ -1,7 +1,41 @@
-import React, {createContext, useContext} from 'react';
+import React, {createContext, useContext, useRef} from 'react';
 import Style from './style-tag';
+import {isNodeEnvironment} from './is-node';
 
-const Context = createContext<Rules | undefined>(undefined);
+/**
+ * Cache to hold already used styles.
+ * React Context on the server - singleton object on the client.
+ */
+const Cache: any = isNodeEnvironment() ? createContext<Rules | undefined>(undefined) : {};
+
+/**
+ * Hook using the cache created on the server or client.
+ */
+const useCache = (): Partial<Rules> => {
+  if (isNodeEnvironment()) {
+    // On the server we use React Context to we don't leak the cache between SSR calls.
+    // During runtime this hook isn't conditionally called - it is at build time that the flow gets decided.
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    return useContext(Cache) || {};
+  }
+
+  // On the client we use the object singleton.
+  return Cache;
+};
+
+/**
+ * On the server this ensures the minimal amount of styles will be rendered
+ * safely using React Context.
+ *
+ * On the browser this turns into a fragment with no React Context.
+ */
+const StyleCacheProvider = ({value, children}: {value: Partial<Rules>, children: React.ReactNode}) => {
+  if (isNodeEnvironment()) {
+    return <Cache.Provider value={value}>{children}</Cache.Provider>;
+  }
+
+  return children as JSX.Element;
+};
 
 /**
  * Aggregates styles into groups to be to the head of the application during runtime, or inline within components for server-render.
@@ -9,19 +43,19 @@ const Context = createContext<Rules | undefined>(undefined);
  * @param ruleset TStyleSheet
  */
 const StyleGroup = ({children = null, ruleset}: any) => {
-  const cached = useContext(Context);
-  const current = toCache(ruleset.sheet.rules);
+  const cached = useCache();
+  const current = toRulesCache(ruleset.sheet.rules);
+  const newRules = useRef([] as string[]);
 
   return (
-    <Context.Provider value={current}>
-      <Style ruleset={filter(current, cached)} />
+    <StyleCacheProvider value={cached}>
+      <Style ruleset={filter(newRules.current, current, cached)} />
       {children}
-    </Context.Provider>
+    </StyleCacheProvider>
   );
 };
 
-
-const toCache = (rules: Rules): Rules => {
+const toRulesCache = (rules: Rules): Rules => {
   return Object.entries(rules).reduce(
     (res, [key, value]) => ({
       ...res,
@@ -37,15 +71,15 @@ const toCache = (rules: Rules): Rules => {
   );
 };
 
-const filter = (current: Rules, cached?: Rules) => {
-  const newRules: string[] = [];
-
+const filter = (newRules: string[], current: Rules, cached: Partial<Rules>) => {
   const groupNames: RuleGroupNames = ['themed', 'global', 'styled', 'onevar', 'allvar', 'inline'];
 
   groupNames.forEach(groupName => {
-    const {group, cache} = current[groupName];
+    const {group, cache, index, apply} = current[groupName];
 
-    const cachedGroup = cached?.[groupName].cache || new Set();
+    if (!cached[groupName]) cached[groupName] = {cache: new Set(), group, index, apply};
+
+    const cachedGroup = cached[groupName]!.cache;
 
     const difference = new Set(Array.from(cache).filter(x => !cachedGroup.has(x)));
 
@@ -56,6 +90,7 @@ const filter = (current: Rules, cached?: Rules) => {
     Array.from(cache).forEach((key, index) => {
       if (cachedGroup.has(key)) return;
       newRules.push(group.cssRules[index].cssText);
+      cachedGroup.add(key);
     });
   });
 
