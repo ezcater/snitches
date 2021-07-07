@@ -1,14 +1,19 @@
 import {StyleSheetOpts} from './types';
 import {blocks} from './blocks';
 
+
+let styleInHead: HTMLStyleElement;
+
 /**
  * Adds a `<style>` tag to the `<head>`.
  */
 function addStyleTagToHead(opts: StyleSheetOpts): HTMLStyleElement {
+  if (styleInHead && document.contains(styleInHead)) return styleInHead;
   const tag = document.createElement('style');
   opts.nonce && tag.setAttribute('nonce', opts.nonce);
   tag.appendChild(document.createTextNode(''));
   document.head.appendChild(tag);
+  styleInHead = tag;
   return tag;
 }
 
