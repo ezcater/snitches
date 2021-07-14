@@ -1,18 +1,25 @@
 import React, {createContext, useContext, useRef} from 'react';
-import Style from './style-tag';
-import {isNodeEnvironment} from './is-node';
+
+/**
+ * Returns `true` when inside a server environment else `false`.
+ *
+ * This method works by checking for access to a global Document object.
+ */
+ function isServerEnvironment(): boolean {
+  return typeof document === 'undefined';
+};
 
 /**
  * Cache to hold already used styles.
  * React Context on the server - singleton object on the client.
  */
-const Cache: any = isNodeEnvironment() ? createContext(false) : false;
+const Cache: any = isServerEnvironment() ? createContext(false) : false;
 
 /**
 * Hook using the cache created on the server or client.
 */
-const useCache = (): boolean => {
-  if (isNodeEnvironment()) {
+function useCache(): boolean {
+  if (isServerEnvironment()) {
     // On the server we use React Context to we don't leak the cache between SSR calls.
     // During runtime this hook isn't conditionally called - it is at build time that the flow gets decided.
     // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -23,19 +30,32 @@ const useCache = (): boolean => {
   return Cache;
 };
 
-/**
-* On the server this ensures the minimal amount of styles will be rendered
-* safely using React Context.
-*
-* On the browser this turns into a fragment with no React Context.
-*/
-const StyleCacheProvider = ({value, children}: {value: boolean, children: React.ReactNode}) => {
-  if (isNodeEnvironment()) {
-    return <Cache.Provider value={value}>{children}</Cache.Provider>;
-  }
+function getCssString(ruleset: any) {
+  const groupSheet = ruleset.sheet;
+  const {cssRules} = groupSheet.sheet;
+  return Array.from(cssRules as CSSMediaRule[]).map((cssRule: CSSMediaRule, cssRuleIndex) => {
+    const { cssText } = cssRule;
 
-  return children as JSX.Element;
-};
+    let lastRuleCssText = '';
+
+    if (cssText.startsWith('--stitches')) return '';
+
+    if (cssRules[cssRuleIndex - 1] && (lastRuleCssText = cssRules[cssRuleIndex - 1].cssText).startsWith('--stitches')) {
+      if (!cssRule.cssRules.length) return '';
+
+      for (const name in groupSheet.rules) {
+        if (groupSheet.rules[name].group === cssRule) {
+          return `--stitches{--:${Array.from(groupSheet.rules[name].cache).join(' ')}}${cssText}`;
+        }
+      }
+
+      return cssRule.cssRules.length ? `${lastRuleCssText}${cssText}` : '';
+    }
+
+    return cssText;
+  })
+  .join('');
+}
 
 /**
  * Aggregates styles into groups to be to the head of the application during runtime, or inline within components for server-render.
@@ -44,63 +64,40 @@ const StyleCacheProvider = ({value, children}: {value: boolean, children: React.
  */
 const StyleGroup = ({children = null, ruleset}: any) => {
   const cached = useCache();
-  
-  if (isNodeEnvironment() && !cached) ruleset.reset();
-  
-  const ref = useRef('');
+  const ref = useRef<string>();
 
-  // update the ref if it's changed since the last render
-  // note this isn't in a useEffect, since that doesn't run on the server
-  ref.current += ruleset.toString();
+  // sometimes node envs (like JEST) will use reactDOM.render
+  // instead of renderToString/stream etc in order to test interactions
+  // in that setup, we should only "server render" styles in the first response
+  // we'll then inject styles into the document head
+  const isFirstRender = ref.current === undefined;
+  const isSSR = isFirstRender && isServerEnvironment();
 
-  const {current: styles} = ref;
+  if (isSSR) {
+    if (!cached) ruleset.reset();
+    ref.current = getCssString(ruleset);
+  }
+  else return children || null;
 
   // remove styles already inserted into the page
-  if (isNodeEnvironment()) prune(ruleset.sheet.rules); 
+  prune(ruleset.sheet.rules); 
 
   return (
-    <StyleCacheProvider value={true}>
-      <Style ruleset={styles} />
+    <Cache.Provider value={true}>
+      {ref.current ? <style data-snitches-ssr dangerouslySetInnerHTML={{__html: ref.current}} /> : null}
       {children}
-    </StyleCacheProvider>
+    </Cache.Provider>
   );
 };
 
-const prune = (current: Rules) => {
-  const groupNames: RuleGroupNames = ['themed', 'global', 'styled', 'onevar', 'allvar', 'inline'];
+const prune = (current: any) => {
+  const groupNames = ['themed', 'global', 'styled', 'onevar', 'allvar', 'inline'];
 
   groupNames.forEach(groupName => {
     const {group} = current[groupName];
     // when SSR, cssRules is a simple array (and can be cleared)
-    (group.cssRules as any).length = 0;
+    group.cssRules.length = 0;
   });
 };
-
-// types from https://github.com/modulz/stitches/blob/676eac2c37f50ec1598c4daba3cfcb35dca92287/packages/core/src/createSheet.d.ts
-type SheetGroup = {
-  sheet: CSSStyleSheet;
-  rules: {
-    themed: RuleGroup;
-    global: RuleGroup;
-    styled: RuleGroup;
-    onevar: RuleGroup;
-    allvar: RuleGroup;
-    inline: RuleGroup;
-  };
-
-  reset(): void;
-  toString(): string;
-};
-
-type RuleGroup = {
-  index: number;
-  group: CSSGroupingRule;
-  cache: Set<string>;
-
-  apply(cssText: string): void;
-};
-
-type Rules = SheetGroup['rules'];
-type RuleGroupNames = (keyof Rules)[];
 
 export default StyleGroup;
