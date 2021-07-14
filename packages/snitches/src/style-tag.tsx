@@ -1,7 +1,6 @@
 import React, {ReactNode} from 'react';
-import {default as CC} from './style-cache';
 import {default as CS} from './style';
-import {blocks} from './blocks';
+import {isNodeEnvironment} from './is-node';
 
 interface Sheet {
   toString(): string;
@@ -15,6 +14,17 @@ interface StyleTagProps {
   ruleset?: Sheet | string;
 }
 
+if (!isNodeEnvironment()) {
+  /**
+   * Iterates through all found style elements generated when server side rendering
+   */
+  const ssrStyles = document.querySelectorAll<HTMLStyleElement>('style[data-s-ssr]');
+  for (let i = 0; i < ssrStyles.length; i++) {
+    // Move all found server-side rendered style elements to the head before React hydration happens.
+    document.head.appendChild(ssrStyles[i]);
+  }
+}
+
 /**
  * Aggregates styles to the head of the application during runtime or inline within components for server-render.
  *
@@ -22,11 +32,12 @@ interface StyleTagProps {
  * @param opts StyleSheetOpts
  */
 const StyleTag: React.FC<StyleTagProps> = (props) => {
+  const styles = props.ruleset?.toString();
   return (
-    <CC>
-      <CS>{blocks(props.ruleset?.toString() || '')}</CS>
+    <>
+      <CS>{styles || ''}</CS>
       <>{props.children}</>
-    </CC>
+    </>
   );
 };
 

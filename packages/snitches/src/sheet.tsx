@@ -1,6 +1,4 @@
 import {StyleSheetOpts} from './types';
-import {blocks} from './blocks';
-
 
 let styleInHead: HTMLStyleElement;
 
@@ -30,8 +28,9 @@ export default function insertRule(css: string, opts: StyleSheetOpts = {}) {
 
   if (process.env.NODE_ENV === 'production' && !isIE11) {
     const sheet = style.sheet as CSSStyleSheet;
-    // media query may have contained multiple rules, so iterate over each before inserting
-    blocks(css).forEach(style => sheet.insertRule(style, sheet.cssRules.length));
+    try {
+      sheet.insertRule(css, sheet.cssRules.length);
+    } catch {}
   } else {
     style.appendChild(document.createTextNode(css));
   }

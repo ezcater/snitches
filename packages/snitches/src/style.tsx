@@ -1,7 +1,6 @@
-import React from 'react';
+import React, {useRef} from 'react';
 import insertRule from './sheet';
 import {StyleSheetOpts} from './types';
-import {useCache} from './style-cache';
 import {isNodeEnvironment} from './is-node';
 
 interface StyleProps extends StyleSheetOpts {
@@ -9,47 +8,29 @@ interface StyleProps extends StyleSheetOpts {
    * CSS Rules.
    * Ensure each rule is a separate element in the array.
    */
-  children: string[];
+  children: string;
 }
 
 function Style(props: StyleProps) {
-  const inserted = useCache();
-  const {current: sheets} = React.useRef<string[]>([]);
+  const ref = useRef<string>('');
 
-  if (props.children.length) {
+  // update the ref if it's changed since the last render
+  // note this isn't in a useEffect, since that doesn't run on the server
+  ref.current += props.children.toString();
+  
+  const {current: sheets} = ref;
+
+  if (sheets) {
     if (isNodeEnvironment()) {
-      for (let i = 0; i < props.children.length; i++) {
-        const sheet = props.children[i];
-        if (inserted[sheet]) {
-          continue;
-        } else {
-          inserted[sheet] = true;
-          sheets.push(sheet);
-        }
-      }
-
-      if (!sheets.length) {
-        return null;
-      }
-
       return (
         <style
           data-s-ssr
           nonce={props.nonce}
-          dangerouslySetInnerHTML={{__html: sheets.join('')}}
+          dangerouslySetInnerHTML={{__html: sheets}}
         />
       );
-    } else {
-      for (let i = 0; i < props.children.length; i++) {
-        const sheet = props.children[i];
-        if (inserted[sheet]) {
-          continue;
-        }
-
-        inserted[sheet] = true;
-        insertRule(sheet, props);
-      }
     }
+    insertRule(sheets, props);
   }
 
   return null;
