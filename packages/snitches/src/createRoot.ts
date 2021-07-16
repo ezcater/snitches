@@ -179,12 +179,14 @@ function toCss(cssRules: CSSRuleList): string {
   return Array.from(cssRules).map((cssRule) => cssRule.cssText).join('');
 }
 
-function hydrate(_groupSheet: CSSStyleSheet, ownerNode?: Document) {
+function hydrate(groupSheet: CSSStyleSheet, ownerNode?: Document) {
   const sheets = Array.from(Object(ownerNode).styleSheets as StyleSheetList || [])
 
   // iterate all stylesheets until a hydratable stylesheet is found
   for (const sheet of sheets) {
-    if (sheet.href && !sheet.href.startsWith(location.origin)) continue
+    if (sheet.href && !sheet.href.startsWith(location.origin)) continue;
+
+    let inserted = false;
 
     for (let index = 0, rules = sheet.cssRules; rules[index]; ++index) {
       /** Possible indicator rule. */
@@ -208,21 +210,25 @@ function hydrate(_groupSheet: CSSStyleSheet, ownerNode?: Document) {
 
       const cache = cssText.slice(16, -3).trim().split(/\s+/);
 
-      const groupName: GroupName | undefined = names[cache[0] as any];
+      const groupNumber = cache[0] as any;
+
+      const groupName: GroupName | undefined = names[groupNumber];
 
       // a hydratable style rule will have a parsable group, ignore all others
       if (!groupName) continue;
 
-      // TODO: roll up all the style sheet entries into the group sheet (which will ensure the styles are correctly ordered)
+      const sheetIndex = groupNumber * 2;
 
-      // // create a group sheet if one does not already exist
-      // if (!groupSheet) groupSheet = { sheet, reset, rules: {} as any };
+      const mediaSheet = groupSheet.cssRules[sheetIndex] as CSSMediaRule | undefined;
 
-      // // add the group to the group sheet
-      // groupSheet.rules[groupName] = { group, index, cache: new Set(cache) } as any;
+      if (mediaSheet?.insertRule) {
+        mediaSheet?.insertRule(group.cssText, mediaSheet.cssRules.length);
+        inserted = true;
+      }
+    }
 
-      // move the stitches stylesheet into the page head
-      if (sheet.ownerNode) ownerNode?.head.appendChild(sheet.ownerNode);
+    if (inserted && sheet.ownerNode) {
+      sheet.ownerNode.parentElement?.removeChild(sheet.ownerNode);
     }
   }
 }
