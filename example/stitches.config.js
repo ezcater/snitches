@@ -1,7 +1,8 @@
 import {createCss} from '@stitches/core';
+import { createRoot } from '@ezcater/snitches';
 
 export default createCss({
-  root: null,
+  root: createRoot(),
   theme: {
     colors: {
       gray400: 'gainsboro',
