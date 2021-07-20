@@ -102,11 +102,8 @@ function createSheet(root?: Document): CSSStyleSheet {
 
   // if running in the browser AND the browser supports CSS vars, we can use a single stylesheet and insertRule
   // and fall back in stitches default style insertion logic
-  if (ownerNode?.sheet && supportsCSSVars) {
-    return ownerNode.sheet;
-  }
-
-  const sheet = {
+  // otherwise we need to use a custom sheet to insert styles with appendChild
+  const sheet = ownerNode?.sheet && supportsCSSVars ? ownerNode.sheet : {
     type: 'text/css',
     cssRules: [],
     // this is a workaround for the fact that stitches doesn't actually call deleteRule to remove styles
@@ -186,7 +183,11 @@ function toCss(cssRules: CSSRuleList): string {
 }
 
 function hydrate(groupSheet: CSSStyleSheet, ownerNode?: Document) {
-  const sheets = Array.from(Object(ownerNode).styleSheets as StyleSheetList || [])
+  const sheets = Array
+    // all the stylesheets on the page
+    .from(Object(ownerNode).styleSheets as StyleSheetList || [])
+    // filter to only the set tagged as being server rendered by snitches
+    .filter(sheet => (sheet.ownerNode as HTMLStyleElement)?.dataset.snitchesSsr)
 
   // iterate all stylesheets until a hydratable stylesheet is found
   for (const sheet of sheets) {
@@ -223,7 +224,7 @@ function hydrate(groupSheet: CSSStyleSheet, ownerNode?: Document) {
       // a hydratable style rule will have a parsable group, ignore all others
       if (!groupName) continue;
 
-      const sheetIndex = groupNumber * 2;
+      const sheetIndex = (groupNumber * 2) + 1;
 
       const mediaSheet = groupSheet.cssRules[sheetIndex] as CSSMediaRule | undefined;
 
@@ -234,6 +235,7 @@ function hydrate(groupSheet: CSSStyleSheet, ownerNode?: Document) {
     }
 
     if (inserted && sheet.ownerNode) {
+      // remove the stylesheet to avoid react hydration warnings
       sheet.ownerNode.parentElement?.removeChild(sheet.ownerNode);
     }
   }
