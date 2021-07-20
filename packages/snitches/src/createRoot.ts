@@ -60,7 +60,13 @@ const createRoot = () : DocumentRoot => {
   } as any;
 };
 
-const supportsCSSVars = typeof window !== 'undefined' && window.CSS && CSS.supports('color', 'var(--css-var)');
+const supportsCSSVars = (
+  typeof window !== 'undefined'
+  && 'CSS' in window
+  && 'supports' in window.CSS
+  && CSS.supports('color', 'var(--css-var)')
+);
+
 
 // CSSRule types: https://developer.mozilla.org/en-US/docs/Web/API/CSSRule/type
 const types = {
