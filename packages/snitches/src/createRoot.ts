@@ -187,7 +187,7 @@ function hydrate(groupSheet: CSSStyleSheet, ownerNode?: Document) {
     // all the stylesheets on the page
     .from(Object(ownerNode).styleSheets as StyleSheetList || [])
     // filter to only the set tagged as being server rendered by snitches
-    .filter(sheet => (sheet.ownerNode as HTMLStyleElement)?.dataset.snitchesSsr)
+    .filter(sheet => (sheet.ownerNode as HTMLStyleElement)?.dataset?.snitchesSsr)
 
   // iterate all stylesheets until a hydratable stylesheet is found
   for (const sheet of sheets) {
