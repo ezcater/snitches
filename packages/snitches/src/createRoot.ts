@@ -98,7 +98,7 @@ function createSheet(root?: Document): CSSStyleSheet {
   }
 
   // tag the style element so we know it was inserted by snitches
-  if (ownerNode) ownerNode.dataset.snitches = '';
+  if (ownerNode?.dataset) ownerNode.dataset.snitches = '';
 
   // if running in the browser AND the browser supports CSS vars, we can use a single stylesheet and insertRule
   // and fall back in stitches default style insertion logic
@@ -128,7 +128,7 @@ function createSheet(root?: Document): CSSStyleSheet {
         tag = document.createElement('style');
       
         // tag the style element so we know it was inserted by snitches
-        if (tag) tag.dataset.snitches = '';
+        if (tag?.dataset) tag.dataset.snitches = '';
 
         // insert the styles into the tag
         tag.appendChild(document.createTextNode(cssText));
