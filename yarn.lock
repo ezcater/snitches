@@ -51,6 +51,13 @@
   resolved "https://registry.yarnpkg.com/@changesets/types/-/types-0.4.0.tgz#3413badb2c3904357a36268cb9f8c7e0afc3a804"
   integrity sha512-TclHHKDVYQ8rJGZgVeWiF7c91yWzTTWdPagltgutelGu/Psup5PQlUq6svx7S8suj+jXcaE34yEEsfIvzXXB2Q==
 
+"@ezcater/snitches@0.2.5":
+  version "0.2.5"
+  resolved "https://ezcater.jfrog.io/ezcater/api/npm/npm/@ezcater/snitches/-/snitches-0.2.5.tgz#110aa432806593a0b81fe825af8f6540fbf65475"
+  integrity sha1-EQqkMoBlk6C4H+glr49lQPv2VHU=
+  dependencies:
+    csstype "^3.0.6"
+
 "@hapi/accept@5.0.2":
   version "5.0.2"
   resolved "https://registry.yarnpkg.com/@hapi/accept/-/accept-5.0.2.tgz#ab7043b037e68b722f93f376afb05e85c0699523"
