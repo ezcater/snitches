@@ -1,6 +1,6 @@
 {
   "name": "@ezcater/snitches",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "description": "Aggregates styles to the head of the application during runtime or inline within components for server-render.",
   "author": "Craig Cavalier",
   "license": "MIT",
