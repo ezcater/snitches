@@ -1,7 +1,7 @@
 {
   "name": "snitches-workspace",
   "private": true,
-  "version": "0.0.1",
+  "version": "0.0.2",
   "scripts": {
     "clean": "workspaces-run -- rm -rf dist -- rm -f tsconfig.tsbuildinfo -- rm -f tsconfig.browser.tsbuildinfo -- rm -rf build -- rm -rf tsconfig.cjs.tsbuildinfo -- rm -rf tsconfig.esm.tsbuildinfo",
     "start": "yarn build && cd example && yarn dev",
